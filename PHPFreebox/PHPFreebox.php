@@ -11,7 +11,16 @@
     const AIRPLAY_SLIDE_LEFT = 'SlideLeft';
     const AIRPLAY_SLIDE_RIGHT = 'SlideRight';
     const AIRPLAY_DISSOLVE = 'Dissolve';
+    // Constantes Réseau
+    const NETWORK_WIFI_802_11n_Disabled = 'disabled';
+    const NETWORK_WIFI_802_11n_20Mhz = '20';
+    const NETWORK_WIFI_802_11n_40Mhz_Upper = '40_upper';
+    const NETWORK_WIFI_802_11n_40Mhz_Lower = '40_lower';
 
+    /**
+     * @var array
+     */
+    private $_arrCache;
 		/**
 		 * 
 		 * @var string
@@ -32,23 +41,33 @@
 		 * @var string
 		 */
 		private $_cookie;
+    /**
+     *
+     * @var string
+     */
+    private $_CSRFToken;
 		/**
 		 * 
 		 * @var Curl Object
 		 */
 		private $_oCurl;
-		/**
-		 * 
-		 * @var boolean
-		 */
-		private $_debug;
     /**
      * Error
      * @var string
      */
     private $_error;
 
-    private $_urlFreeboxPlayer = 'freebox-player.local';
+    /**
+     *
+     * @var boolean
+     */
+    public $_debug;
+    /**
+     * @var boolean
+     */
+    public $_useCache;
+
+    private $_urlFreeboxPlayer = '192.168.1.32';
     private $_portFreeboxPlayer = 7000;
 		
 		public function __construct($psUrl, $psLogin, $psPassword) {
@@ -59,7 +78,7 @@
 			// Initialization : CURL
 			$this->_oCurl = curl_init();
 			// Initialization : Cookie
-			$this->_cookie = $this->_getCookie();
+			$this->_getCookie();
 		}
 		public function __destruct() {
 			if($this->_oCurl){
@@ -92,8 +111,18 @@
 	    if(count($matches) != 2){
 	      throw new Exception('PHPFreebox : _getCookie : No Cookies');
 	    }
-	    return $matches[1];
-	  }
+      $this->_cookie = $matches[1];
+
+      // X-FBX-CSRF-Token
+      $data = explode("\r\n", $data);
+      foreach($data as $item){
+        if(substr($item, 0, 16) == 'X-FBX-CSRF-Token'){
+          $this->_CSRFToken = trim(str_replace('X-FBX-CSRF-Token:', '', $item));
+          break;
+        }
+      }
+      return true;
+    }
 	  
 	  /**
 	   * Api call
@@ -102,42 +131,79 @@
 	   * @throws Exception
 		 * @return string
 	   */
-	  public function _api($psMethod, array $arrParameters = array() ){
-			$sPage = explode('.', $psMethod);
-	    $sPage = $sPage[0].'.cgi';
-	    
-	    curl_setopt($this->_oCurl, CURLOPT_HEADER, 0);
-	    curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/'.$sPage);
-	    curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, 1);
-	    curl_setopt($this->_oCurl, CURLOPT_POST, 1);
-	    curl_setopt($this->_oCurl, CURLOPT_COOKIE, 'FBXSID='.$this->_cookie);
-	    curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-	    // Form : JSON/RPC
-	    curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, json_encode(array('jsonrpc' => '2.0', 'method' => $psMethod, 'params' => $arrParameters)));
-	    $sReturnJSON = curl_exec($this->_oCurl);
-	    if($this->_debug){
-	    	echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
-	    }
-	    $sReturnData = json_decode($sReturnJSON, true);
-	    if($this->_debug){
-	    	echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
-	    }
-	    
-	    if($sReturnData === false){
-	      throw new Exception('PHPFreebox : _api : JSON Error');
-	    }
-	    if(isset($retour_json['error'])){ 
-	      throw new Exception('PHPFreebox : _api : error : '.json_encode($retour_json));
-	    }
-	    return $sReturnData['result'];
+	  public function _apiJSONGet($psMethod, array $arrParameters = array() ){
+      // Utilisation du cache
+      if($this->_useCache == true
+        && isset($this->_arrCache['method'])
+        && isset($this->_arrCache['result'])
+        && $this->_arrCache['method'] == $psMethod
+        && is_array($this->_arrCache['result'])){
+        return $this->_arrCache['result'];
+      } else {
+        $arrPost = array();
+        $arrPost['method'] = $psMethod;
+        $arrPost['csrf_token'] = $this->_CSRFToken;
+        $arrPost['jsonrpc'] = '2.0';
+        if(!empty($arrParameters)){
+          $arrPost['params'] = $arrParameters;
+        }
+
+        curl_setopt($this->_oCurl, CURLOPT_HEADER, false);
+        $sPage = explode('.', $psMethod);
+        $sPage = $sPage[0].'.cgi';
+        curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/'.$sPage);
+        curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->_oCurl, CURLOPT_POST, true);
+        curl_setopt($this->_oCurl, CURLOPT_COOKIE, 'FBXSID="'.$this->_cookie.'"');
+        curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        // Form : JSON/RPC
+        curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, json_encode($arrPost));
+        $sReturnJSON = curl_exec($this->_oCurl);
+        if($this->_debug){
+          echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
+        }
+        $sReturnData = json_decode($sReturnJSON, true);
+        if($this->_debug){
+          echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
+        }
+
+        if($sReturnData === false){
+          throw new Exception('PHPFreebox : _api : JSON Error');
+        }
+        if(isset($sReturnData['error'])){
+          throw new Exception('PHPFreebox : _api : error : '.json_encode($sReturnData['error']));
+        }
+        $this->_arrCache['method'] = $psMethod;
+        $this->_arrCache['result'] = $sReturnData['result'];
+
+        return $sReturnData['result'];
+      }
 	  }
-	  
-	  public function setDebug($pbDebug = false){
-	  	if(is_bool($pbDebug)){
-	  		$this->_debug = $pbDebug;
-	  	}
-	  	return $this;
-	  }
+
+    /**
+     * @param $psMethod
+     * @param array $arrParameters
+     * @return bool
+     */
+    public function _apiJSONPost($psMethod, array $arrParameters = array() ){
+      $arrParameters['csrf_token'] = $this->_CSRFToken;
+      $arrParameters['method'] = $psMethod;
+
+      $sPage = explode('.', $psMethod);
+      $sPage = $sPage[0].'.cgi';
+      curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/'.$sPage);
+      curl_setopt($this->_oCurl, CURLOPT_POST, true);
+      curl_setopt($this->_oCurl, CURLOPT_COOKIE, 'FBXSID="'.$this->_cookie.'"');
+      curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded; charset=UTF-8','X-Requested-With: XMLHttpRequest'));
+      curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, http_build_query($arrParameters));
+      $sReturn = curl_exec($this->_oCurl);
+      if($sReturn === false){
+        $this->setError('CURL ('.curl_errno($this->_oCurl).') : '.curl_error($this->_oCurl));
+        return false;
+      } else {
+        return true;
+      }
+    }
 
     private function setError($error = ''){
       $this->_error = $error;
@@ -158,7 +224,7 @@
       if($hFile){
         // Using a PUT method i.e. -XPUT
         curl_setopt($this->_oCurl, CURLOPT_PUT, true);
-        curl_setopt($this->_oCurl, CURLOPT_URL, 'http://192.168.1.32:'.$this->_portFreeboxPlayer.'/photo');
+        curl_setopt($this->_oCurl, CURLOPT_URL, 'http://'.$this->_urlFreeboxPlayer.':'.$this->_portFreeboxPlayer.'/photo');
 
         curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('User-Agent: MediaControl/1.0', 'X-Apple-Transition: '.$psTransition, 'Content-Length: ' . filesize($psImage), 'Accept:', 'Content-Type:', 'Expect:', 'Host:'));
         curl_setopt($this->_oCurl, CURLOPT_TIMEOUT_MS, $piTimeOut);
@@ -198,7 +264,7 @@
 	   * @return array
 	   */
 	  public function listDirectory($psDirectory = ''){
-	  	return $this->_api('fs.list', array($psDirectory));
+	  	return $this->_apiJSONGet('fs.list', array($psDirectory));
 	  }
 	  public function removeFile(){
 	  	
@@ -221,15 +287,98 @@
 	  public function moveDirectory(){
 	  	
 	  }
-	  
-	  //===============================================
-	  // API SeedBox
-	  //===============================================
-	  
+
+    //===============================================
+    // API Réseau
+    //===============================================
+    public function network_setWifiStatus($pbEnabled, $piChannel = 11, $psMode = PHPFreebox::NETWORK_WIFI_802_11n_20Mhz){
+      if(!is_bool($pbEnabled)){
+        return false;
+      }
+      if(!is_int($piChannel)){
+        return false;
+      }
+      if($piChannel < 1 || $piChannel > 13){
+        return false;
+      }
+      if($psMode != PHPFreebox::NETWORK_WIFI_802_11n_Disabled
+        && $psMode != PHPFreebox::NETWORK_WIFI_802_11n_20Mhz
+        && $psMode != PHPFreebox::NETWORK_WIFI_802_11n_40Mhz_Lower
+        && $psMode != PHPFreebox::NETWORK_WIFI_802_11n_40Mhz_Upper){
+        return false;
+      }
+
+      // Parametres
+      $arrParameters = array();
+      $arrParameters['channel'] = $piChannel;
+      $arrParameters['config'] = 'Valider';
+      $arrParameters['ht_mode'] = $psMode;
+      if($pbEnabled == true){
+        $arrParameters['enabled'] = 'on';
+      }
+      return $this->_apiJSONPost('wifi.ap_params_set', $arrParameters);
+    }
+
+    public function network_getWifiConfig($psInfo){
+      if(is_string($psInfo) && in_array($psInfo, array('channel', 'is_enabled', 'mode'))){
+        $arrResult = $this->_apiJSONGet('wifi.config_get');
+        switch($psInfo){
+          case 'channel' : return $arrResult['ap_params']['channel']; break;
+          case 'is_enabled' : return $arrResult['ap_params']['enabled']; break;
+          case 'mode':
+            switch($arrResult['ap_params']['ht']['ht_mode']){
+              case 20: return PHPFreebox::NETWORK_WIFI_802_11n_20Mhz;
+            }
+            break;
+        }
+
+      }
+      return '';
+    }
+    public function network_getWifiConfig_FreeWifi($psInfo){
+      if(is_string($psInfo) && in_array($psInfo, array('is_enabled'))){
+        $arrResult = $this->_apiJSONGet('wifi.config_get');
+        switch($psInfo){
+          case 'is_enabled' : return $arrResult['bss']['freewifi']['params']['enabled']; break;
+        }
+
+      }
+      return '';
+    }
+    public function network_getWifiConfig_PrivateNetwork($psInfo){
+      if(is_string($psInfo) && in_array($psInfo, array('encryption', 'is_enabled', 'is_macfilter_enabled', 'is_ssid_hidden', 'key', 'ssid', 'version_eapol'))){
+        $arrResult = $this->_apiJSONGet('wifi.config_get');
+        switch($psInfo){
+          case 'encryption' : return $arrResult['bss']['perso']['params']['encryption']; break;
+          case 'is_enabled' : return $arrResult['bss']['perso']['params']['enabled']; break;
+          case 'is_macfilter_enabled' : return $arrResult['bss']['perso']['params']['mac_filter']; break;
+          case 'is_ssid_hidden' : return $arrResult['bss']['perso']['params']['hide_ssid']; break;
+          case 'key' : return $arrResult['bss']['perso']['params']['key']; break;
+          case 'ssid' : return $arrResult['bss']['perso']['params']['ssid']; break;
+          case 'version_eapol' : return $arrResult['bss']['perso']['params']['eapol_version']; break;
+        }
+
+      }
+      return '';
+    }
+    //===============================================
+    // API SeedBox
+    //===============================================
+	  public function seedbox_addLink(){
+
+    }
+
 	  //===============================================
 	  // API Status
 	  //===============================================
 	  public function getVersion(){
 	  	
 	  }
+
+    //===============================================
+    // API Television
+    //===============================================
+    public function TV_getPlaylistM3U(){
+      return file_get_contents('http://'.$this->_url.'/freeboxtv/playlist.m3u');
+    }
 	}

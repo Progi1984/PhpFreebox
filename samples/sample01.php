@@ -13,7 +13,7 @@
 	}
 
 	$oFreebox = new PHPFreebox(FREEBOX_API_URL, FREEBOX_API_LOGIN, FREEBOX_API_PASSWORD);
-	//$oFreebox->setDebug(true);
+	//$oFreebox->_debug  = true;
 
 	$arrListing = $oFreebox->listDirectory($paramDir);
 	if(!empty($arrListing)){
