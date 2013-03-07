@@ -1,5 +1,9 @@
+// Images
 wikimedia_commons_caracal.jpg  : http://commons.wikimedia.org/wiki/File:Caracal_Caracal-001.jpg
 wikimedia_commons_F16.jpg : http://commons.wikimedia.org/wiki/File:Belgian_F-16_Radom.JPG
 wikimedia_commons_atmosphere.jpg : http://commons.wikimedia.org/wiki/File:Top_of_Atmosphere.jpg
 wikimedia_commons_moulin.jpg : http://commons.wikimedia.org/wiki/File:Kuremaa_m%C3%B5isa_tuuleveski.jpg
 wikimedia_commons_train.jpg : http://commons.wikimedia.org/wiki/File:RhB_ABe_8-12_Allegra_between_Lagalb_and_Ospizio_Bernina.jpg
+
+// Torrent
+Fedora-18-i386-DVD.torrent : http://torrent.fedoraproject.org/torrents/
