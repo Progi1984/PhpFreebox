@@ -10,7 +10,9 @@ Changelog
   - ADDED : Airplay : Support Photo
   - ADDED : FileSystem : Méthodes pour parcourir le disque dur de la Freebox
   - ADDED : Télévision : Récupération du contenu de la playlist des chaines
+  - ADDED : SeedBox (Listing, Ajout, Suppression, Pause & Reprise du téléchargement)
   - ADDED : Wifi : Récupération d'informations (sur FreeWifi et le Réseau personnel)
+
   
   
 Liens

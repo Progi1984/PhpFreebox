@@ -164,9 +164,8 @@
         }
         $sReturnData = json_decode($sReturnJSON, true);
         if($this->_debug){
-          echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
+          echo '<pre>'.print_r($sReturnData, true).'</pre>';
         }
-
         if($sReturnData === false){
           throw new Exception('PHPFreebox : _api : JSON Error');
         }
@@ -185,23 +184,51 @@
      * @param array $arrParameters
      * @return bool
      */
-    public function _apiJSONPost($psMethod, array $arrParameters = array() ){
+    public function _apiJSONPost($psMethod, array $arrParameters = array(), $bPostFile = false){
       $arrParameters['csrf_token'] = $this->_CSRFToken;
       $arrParameters['method'] = $psMethod;
 
       $sPage = explode('.', $psMethod);
       $sPage = $sPage[0].'.cgi';
+      curl_setopt($this->_oCurl, CURLOPT_HEADER, false);
       curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/'.$sPage);
+      curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, true);
       curl_setopt($this->_oCurl, CURLOPT_POST, true);
       curl_setopt($this->_oCurl, CURLOPT_COOKIE, 'FBXSID="'.$this->_cookie.'"');
-      curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded; charset=UTF-8','X-Requested-With: XMLHttpRequest'));
-      curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, http_build_query($arrParameters));
+      if($bPostFile == false){
+        curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded; charset=UTF-8','X-Requested-With: XMLHttpRequest'));
+        curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, http_build_query($arrParameters));
+      } else {
+        curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('X-Requested-With: XMLHttpRequest'));
+        curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, $arrParameters);
+      }
       $sReturn = curl_exec($this->_oCurl);
+      if($this->_debug){
+        echo 'CURL ('.curl_errno($this->_oCurl).') : '.curl_error($this->_oCurl);
+        echo '<pre>'.print_r($sReturn, true).'</pre>';
+      }
       if($sReturn === false){
         $this->setError('CURL ('.curl_errno($this->_oCurl).') : '.curl_error($this->_oCurl));
         return false;
       } else {
-        return true;
+        if($bPostFile == false){
+          return true;
+        } else {
+          $sReturnData = json_decode($sReturn, true);
+          if($this->_debug){
+            echo '<pre>'.print_r($sReturnData, true).'</pre>';
+          }
+          if(isset($sReturnData['error'])){
+            if($sReturnData['error'] == 11){
+              $this->setError('File ever existing in SeedBox');
+              return false;
+            } else {
+              throw new Exception('PHPFreebox : _api : error : '.json_encode($sReturnData['error']));
+            }
+          } else {
+            return $sReturnData['result'];
+          }
+        }
       }
     }
 
@@ -364,8 +391,45 @@
     //===============================================
     // API SeedBox
     //===============================================
-	  public function seedbox_addLink(){
-
+	  public function seedbox_addLink($psUrl){
+      $arrParameters = array();
+      $arrParameters['url'] = $psUrl;
+      $arrParameters['user'] = $this->_login;
+      return $this->_apiJSONPost('download.http_add', $arrParameters);
+    }
+    public function seedbox_addTorrentURL($psUrl){
+      $arrParameters = array();
+      $arrParameters['url'] = $psUrl;
+      $arrParameters['user'] = $this->_login;
+      return $this->_apiJSONPost('download.torrent_add', $arrParameters);
+    }
+    public function seedbox_addTorrentFile($psFile){
+      $arrParameters = array();
+      $arrParameters['data'] = '@'.$psFile;
+      $arrParameters['url'] = '';
+      $arrParameters['user'] = $this->_login;
+      return $this->_apiJSONPost('download.torrent_add', $arrParameters, true);
+    }
+    public function seedbox_list(){
+      return $this->_apiJSONGet('download.list');
+    }
+    public function seedbox_removeLink($piId){
+      return $this->_apiJSONGet('download.remove', array(0 => 'http', 1 => $piId));
+    }
+    public function seedbox_stopLink($piId){
+      return $this->_apiJSONGet('download.stop', array(0 => 'http', 1 => $piId));
+    }
+    public function seedbox_startLink($piId){
+      return $this->_apiJSONGet('download.start', array(0 => 'http', 1 => $piId));
+    }
+    public function seedbox_removeTorrent($piId){
+      return $this->_apiJSONGet('download.remove', array(0 => 'torrent', 1 => $piId));
+    }
+    public function seedbox_stopTorrent($piId){
+      return $this->_apiJSONGet('download.stop', array(0 => 'torrent', 1 => $piId));
+    }
+    public function seedbox_startTorrent($piId){
+      return $this->_apiJSONGet('download.start', array(0 => 'torrent', 1 => $piId));
     }
 
 	  //===============================================
