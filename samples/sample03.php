@@ -13,6 +13,11 @@
   $oFreebox->network_setWifiStatus(true);
 
   echo '<ul>';
+    echo '<li> Mat&eacute;riel :';
+      echo '<ul>';
+        echo '<li> Addresse MAC '.$oFreebox->network_getMacAddress();
+      echo '</ul>';
+    echo '</li>';
     echo '<li> WIFI :';
       echo '<ul>';
         echo '<li> Config :';

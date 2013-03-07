@@ -6,6 +6,7 @@
 	 *
 	 */
 	class PHPFreebox{
+    const SYS_VERSION = '0.01-devel';
     // Constantes AirPlay
     const AIRPLAY_NONE = 'None';
     const AIRPLAY_SLIDE_LEFT = 'SlideLeft';
@@ -75,6 +76,7 @@
 			$this->_login = $psLogin;
 			$this->_password = $psPassword;
 			$this->_debug = false;
+      $this->_useCache = false;
 			// Initialization : CURL
 			$this->_oCurl = curl_init();
 			// Initialization : Cookie
@@ -147,7 +149,6 @@
         if(!empty($arrParameters)){
           $arrPost['params'] = $arrParameters;
         }
-
         curl_setopt($this->_oCurl, CURLOPT_HEADER, false);
         $sPage = explode('.', $psMethod);
         $sPage = $sPage[0].'.cgi';
@@ -159,11 +160,11 @@
         // Form : JSON/RPC
         curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, json_encode($arrPost));
         $sReturnJSON = curl_exec($this->_oCurl);
-        if($this->_debug){
+        if($this->_debug == true){
           echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
         }
         $sReturnData = json_decode($sReturnJSON, true);
-        if($this->_debug){
+        if($this->_debug == true){
           echo '<pre>'.print_r($sReturnData, true).'</pre>';
         }
         if($sReturnData === false){
@@ -388,6 +389,10 @@
       }
       return '';
     }
+    public function network_getMacAddress(){
+      return $this->_apiJSONGet('system.mac_address_get');
+    }
+
     //===============================================
     // API SeedBox
     //===============================================
@@ -435,9 +440,27 @@
 	  //===============================================
 	  // API Status
 	  //===============================================
-	  public function getVersion(){
-	  	
+	  public function getVersionFreebox(){
+	  	return $this->_apiJSONGet('system.fw_release_get');
 	  }
+    public function getVersion(){
+      return PHPFreebox::SYS_VERSION;
+    }
+
+    //===============================================
+    // API Systeme
+    //===============================================
+    public function system_reboot($piTimeout = 1){
+      $arrParameters = array();
+      $arrParameters['timeout'] = $piTimeout;
+      return $this->_apiJSONPost('system.reboot', $arrParameters);
+    }
+    public function system_getSerial(){
+      return $this->_apiJSONGet('system.serial_get');
+    }
+    public function system_getUptime(){
+      return $this->_apiJSONGet('system.uptime_get');
+    }
 
     //===============================================
     // API Television
