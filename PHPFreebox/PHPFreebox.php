@@ -181,8 +181,10 @@
 	  }
 
     /**
-     * @param $psMethod
+     * @param string $psMethod
      * @param array $arrParameters
+     * @param boolean $bPostFile
+     * @throws Exception
      * @return bool
      */
     public function _apiJSONPost($psMethod, array $arrParameters = array(), $bPostFile = false){
@@ -291,34 +293,46 @@
 	   * @param string $psDirectory
 	   * @return array
 	   */
-	  public function listDirectory($psDirectory = ''){
+	  public function fs_listDirectory($psDirectory = ''){
 	  	return $this->_apiJSONGet('fs.list', array($psDirectory));
 	  }
 	  public function removeFile(){
 	  	
 	  }
-	  public function createDirectory(){
-	  
+	  public function fs_createDirectory($psDirectory){
+      return $this->_apiJSONGet('fs.mkdir', array($psDirectory));
 	  }
-	  public function removeDirectory(){
-	  	
+	  public function fs_removeDirectory($psDirectory){
+      return $this->_apiJSONGet('fs.remove', array($psDirectory));
 	  }
-	  public function downloadFile(){
-	  	
-	  }
-	  public function uploadFile(){
-	  	
-	  }
-	  public function moveFile(){
-	  	
-	  }
-	  public function moveDirectory(){
-	  	
+	  public function downloadFile($psElement, $psLocalFile){
+      curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/fs.cgi?file='.urlencode($psElement));
+      curl_setopt($this->_oCurl, CURLOPT_COOKIE, 'FBXSID="'.$this->_cookie.'"');
+      curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, true);
+      $data = curl_exec($this->_oCurl);
+      if($data === false){
+        return false;
+      } else {
+        file_put_contents($psLocalFile, $data);
+        return true;
+      }
+    }
+    public function fs_copy($psElement, $psDestination){
+      return $this->_apiJSONGet('fs.copy', array(array($psElement), $psDestination));
+    }
+    public function fs_move($psElement, $psDestination){
+      return $this->_apiJSONGet('fs.move', array(array($psElement), $psDestination));
 	  }
 
     //===============================================
     // API Réseau
     //===============================================
+    /*
+     * @param boolean $pbEnabled
+     * @param integer $piChannel
+     * @param string $psMode
+     * @return boolean
+     */
     public function network_setWifiStatus($pbEnabled, $piChannel = 11, $psMode = PHPFreebox::NETWORK_WIFI_802_11n_20Mhz){
       if(!is_bool($pbEnabled)){
         return false;

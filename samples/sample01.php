@@ -15,7 +15,7 @@
 	$oFreebox = new PHPFreebox(FREEBOX_API_URL, FREEBOX_API_LOGIN, FREEBOX_API_PASSWORD);
 	//$oFreebox->_debug  = true;
 
-	$arrListing = $oFreebox->listDirectory($paramDir);
+	$arrListing = $oFreebox->fs_listDirectory($paramDir);
 	if(!empty($arrListing)){
 		$sDir = '';
 		$sFile = '';

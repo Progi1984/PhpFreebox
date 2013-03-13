@@ -15,6 +15,10 @@ Changelog
   - ADDED : Télévision : Récupération du contenu de la playlist des chaines
   - ADDED : Wifi : Récupération d'informations (sur FreeWifi et le Réseau personnel)
 
+@todo GH #1
+@todo GH #2
+@todo GH #3
+@todo Release
   
 Liens
 ---------
