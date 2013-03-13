@@ -13,9 +13,9 @@ Changelog
   - ADDED : SeedBox (Listing, Ajout, Suppression, Pause & Reprise du téléchargement)
   - ADDED : Systeme (Version Freebox & PHPFreebox, Reboot, Uptime, Numéro de série)
   - ADDED : Télévision : Récupération du contenu de la playlist des chaines
+  - ADDED : Transmission (Set & Get Infos, Methodes RPC spécifiques)
   - ADDED : Wifi : Récupération d'informations (sur FreeWifi et le Réseau personnel)
 
-@todo GH #1
 @todo GH #2
 @todo GH #3
 @todo Release

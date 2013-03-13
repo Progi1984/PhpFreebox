@@ -133,7 +133,7 @@
 	   * @throws Exception
 		 * @return string
 	   */
-	  public function _apiJSONGet($psMethod, array $arrParameters = array() ){
+	  public function _apiJSONGet($psMethod, array $arrParameters = array()){
       // Utilisation du cache
       if($this->_useCache == true
         && isset($this->_arrCache['method'])
@@ -160,23 +160,29 @@
         // Form : JSON/RPC
         curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, json_encode($arrPost));
         $sReturnJSON = curl_exec($this->_oCurl);
-        if($this->_debug == true){
-          echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
-        }
-        $sReturnData = json_decode($sReturnJSON, true);
-        if($this->_debug == true){
-          echo '<pre>'.print_r($sReturnData, true).'</pre>';
-        }
-        if($sReturnData === false){
-          throw new Exception('PHPFreebox : _api : JSON Error');
-        }
-        if(isset($sReturnData['error'])){
-          throw new Exception('PHPFreebox : _api : error : '.json_encode($sReturnData['error']));
-        }
-        $this->_arrCache['method'] = $psMethod;
-        $this->_arrCache['result'] = $sReturnData['result'];
+        print_r($sReturnJSON);
+        if($sReturnJSON === false){
+          $this->setError('CURL ('.curl_errno($this->_oCurl).') : '.curl_error($this->_oCurl));
+          return false;
+        } else {
+          if($this->_debug == true){
+            echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
+          }
+          $sReturnData = json_decode($sReturnJSON, true);
+          if($this->_debug == true){
+            echo '<pre>'.print_r($sReturnData, true).'</pre>';
+          }
+          if($sReturnData === false){
+            throw new Exception('PHPFreebox : _api : JSON Error');
+          }
+          if(isset($sReturnData['error'])){
+            throw new Exception('PHPFreebox : _api : error : '.json_encode($sReturnData['error']));
+          }
+          $this->_arrCache['method'] = $psMethod;
+          $this->_arrCache['result'] = $sReturnData['result'];
 
-        return $sReturnData['result'];
+          return $sReturnData['result'];
+        }
       }
 	  }
 
@@ -476,6 +482,90 @@
       return $this->_apiJSONGet('system.uptime_get');
     }
 
+    //===============================================
+    // API Transmission
+    //===============================================
+    private function _apiTransmission($psMethod, array $arrParameters = array()){
+      // Utilisation du cache
+      if($this->_useCache == true
+        && isset($this->_arrCache['method'])
+        && isset($this->_arrCache['result'])
+        && $this->_arrCache['method'] == $psMethod
+        && is_array($this->_arrCache['result'])){
+        return $this->_arrCache['result'];
+      } else {
+        $arrPost = array();
+        $arrPost['method'] = $psMethod;
+        if(!empty($arrParameters)){
+          $arrPost['arguments'] = $arrParameters;
+        }
+        curl_setopt($this->_oCurl, CURLOPT_HEADER, false);
+        curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/transmission/rpc');
+        curl_setopt($this->_oCurl, CURLOPT_PORT, 9091);
+        curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->_oCurl, CURLOPT_POST, true);
+        curl_setopt($this->_oCurl, CURLOPT_USERPWD, $this->_login.':'.$this->_password);
+        curl_setopt($this->_oCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($this->_oCurl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        // Form : JSON/RPC
+        curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, json_encode($arrPost));
+        $sReturnJSON = curl_exec($this->_oCurl);
+        if($sReturnJSON === false){
+          $this->setError('CURL ('.curl_errno($this->_oCurl).') : '.curl_error($this->_oCurl));
+          return false;
+        } else {
+          if($this->_debug == true){
+            echo '<pre>'.print_r($sReturnJSON, true).'</pre>';
+          }
+          $sReturnData = json_decode($sReturnJSON, true);
+          if($this->_debug == true){
+            echo '<pre>'.print_r($sReturnData, true).'</pre>';
+          }
+          if($sReturnData === false){
+            throw new Exception('PHPFreebox : _api : JSON Error');
+          }
+          if(isset($sReturnData['result']) && $sReturnData['result'] != 'success'){
+            throw new Exception('PHPFreebox : _api : error : '.json_encode($sReturnData['error']));
+          }
+          $this->_arrCache = array();
+          $this->_arrCache['method'] = $psMethod;
+          $this->_arrCache['result'] = $sReturnData;
+
+          return $sReturnData;
+        }
+      }
+    }
+    public function transmission_get($param){
+      $result = $this->_apiTransmission('session-get', array());
+      if($result['result'] == 'success'){
+        if(isset($result['arguments'][$param])){
+          return $result['arguments'][$param];
+        } else {
+          return false;
+        }
+      } else {
+        return $result;
+      }
+    }
+    public function transmission_set($param, $value){
+      $result = $this->_apiTransmission('session-set', array($param => $value));
+      if($result['result'] == 'success'){
+        return true;
+      } else {
+        return false;
+      }
+    }
+    public function transmission_exec($psMethod, array $arrData = array()){
+      if(empty($psMethod)) {
+        return false;
+      }
+      $result = $this->_apiTransmission($psMethod, $arrData);
+      if($result['result'] == 'success'){
+        return $result['arguments'];
+      } else {
+        return false;
+      }
+    }
     //===============================================
     // API Television
     //===============================================
