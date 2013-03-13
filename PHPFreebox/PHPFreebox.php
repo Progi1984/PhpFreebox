@@ -305,7 +305,7 @@
 	  public function fs_removeDirectory($psDirectory){
       return $this->_apiJSONGet('fs.remove', array($psDirectory));
 	  }
-	  public function downloadFile($psElement, $psLocalFile){
+	  public function fs_downloadFile($psElement, $psLocalFile){
       curl_setopt($this->_oCurl, CURLOPT_URL, $this->_url.'/fs.cgi?file='.urlencode($psElement));
       curl_setopt($this->_oCurl, CURLOPT_COOKIE, 'FBXSID="'.$this->_cookie.'"');
       curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, true);

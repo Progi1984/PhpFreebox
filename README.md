@@ -8,7 +8,7 @@ Changelog
 **Version 0.1** _En cours_
 
   - ADDED : Airplay : Support Photo
-  - ADDED : FileSystem : Méthodes pour parcourir le disque dur de la Freebox
+  - ADDED : FileSystem : Listing, Dossiers (Création, Copier, Déplacement), Fichiers (Download, Copier, Déplacement)
   - ADDED : Réseau (Adresse MAC)
   - ADDED : SeedBox (Listing, Ajout, Suppression, Pause & Reprise du téléchargement)
   - ADDED : Systeme (Version Freebox & PHPFreebox, Reboot, Uptime, Numéro de série)
