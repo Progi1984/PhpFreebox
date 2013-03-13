@@ -160,7 +160,6 @@
         // Form : JSON/RPC
         curl_setopt($this->_oCurl, CURLOPT_POSTFIELDS, json_encode($arrPost));
         $sReturnJSON = curl_exec($this->_oCurl);
-        print_r($sReturnJSON);
         if($sReturnJSON === false){
           $this->setError('CURL ('.curl_errno($this->_oCurl).') : '.curl_error($this->_oCurl));
           return false;
@@ -468,6 +467,16 @@
     }
 
     //===============================================
+    // API Storage
+    //===============================================
+    public function storage_list(){
+      return $this->_apiJSONGet('storage.list');
+    }
+    public function storage_umount($piIdStorage){
+      return $this->_apiJSONGet('storage.umount', array($piIdStorage));
+    }
+
+    //===============================================
     // API Systeme
     //===============================================
     public function system_reboot($piTimeout = 1){
@@ -566,6 +575,7 @@
         return false;
       }
     }
+
     //===============================================
     // API Television
     //===============================================
