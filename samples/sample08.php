@@ -63,4 +63,5 @@
   echo 'SET Variable "encryption"'.$oFreebox->transmission_set('encryption', ($value == 'required' ? 'preferred' : 'required')).'<br />';
   echo 'GET Variable "encryption" : '.$oFreebox->transmission_get('encryption').'<br />';
 
+  // Doc : https://trac.transmissionbt.com/browser/trunk/extras/rpc-spec.txt#L621
   print_r($oFreebox->transmission_exec('session-stats'));
