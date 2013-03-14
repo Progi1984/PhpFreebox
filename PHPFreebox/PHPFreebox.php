@@ -6,7 +6,7 @@
 	 *
 	 */
 	class PHPFreebox{
-    const SYS_VERSION = '0.01-devel';
+    const SYS_VERSION = '0.1';
     // Constantes AirPlay
     const AIRPLAY_NONE = 'None';
     const AIRPLAY_SLIDE_LEFT = 'SlideLeft';
