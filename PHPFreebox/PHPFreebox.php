@@ -17,6 +17,50 @@
     const NETWORK_WIFI_802_11n_20Mhz = '20';
     const NETWORK_WIFI_802_11n_40Mhz_Upper = '40_upper';
     const NETWORK_WIFI_802_11n_40Mhz_Lower = '40_lower';
+    // Constantes Telecommande
+    const REMOTE_KEY_POWER = 'power';
+    const REMOTE_KEY_LIST = 'list';
+    const REMOTE_KEY_TV = 'tv';
+    const REMOTE_KEY_NUM0 = '0';
+    const REMOTE_KEY_NUM1 = '1';
+    const REMOTE_KEY_NUM2 = '2';
+    const REMOTE_KEY_NUM3 = '3';
+    const REMOTE_KEY_NUM4 = '4';
+    const REMOTE_KEY_NUM5 = '5';
+    const REMOTE_KEY_NUM6 = '6';
+    const REMOTE_KEY_NUM7 = '7';
+    const REMOTE_KEY_NUM8 = '8';
+    const REMOTE_KEY_NUM9 = '9';
+    const REMOTE_KEY_BACK = 'back';
+    const REMOTE_KEY_SWAP = 'swap';
+    const REMOTE_KEY_INFO = 'info';
+    const REMOTE_KEY_MAIL = 'mail';
+    const REMOTE_KEY_HELP = 'help';
+    const REMOTE_KEY_PIP = 'pip';
+    const REMOTE_KEY_EPG = 'epg';
+    const REMOTE_KEY_MEDIA = 'media';
+    const REMOTE_KEY_OPTIONS = 'options';
+    const REMOTE_KEY_VOL_INC = 'vol_inc';
+    const REMOTE_KEY_VOL_DEC = 'vol_dec';
+    const REMOTE_KEY_VOL_MUTE = 'mute';
+    const REMOTE_KEY_PRGM_INC = 'prgm_inc';
+    const REMOTE_KEY_PRGM_DEC = 'prgm_dec';
+    const REMOTE_KEY_OK = 'ok';
+    const REMOTE_KEY_UP = 'up';
+    const REMOTE_KEY_RIGHT = 'right';
+    const REMOTE_KEY_DOWN = 'down';
+    const REMOTE_KEY_LEFT = 'left';
+    const REMOTE_KEY_HOME = 'home';
+    const REMOTE_KEY_REC = 'rec';
+    const REMOTE_KEY_BACKWARD = 'bwd';
+    const REMOTE_KEY_PREVIOUS = 'prev';
+    const REMOTE_KEY_PLAY = 'play';
+    const REMOTE_KEY_FORWARD = 'fwd';
+    const REMOTE_KEY_NEXT = 'next';
+    const REMOTE_KEY_COLOR_RED = 'red';
+    const REMOTE_KEY_COLOR_GREEN = 'green';
+    const REMOTE_KEY_COLOR_YELLOW = 'yellow';
+    const REMOTE_KEY_COLOR_BLUE = 'blue';
 
     /**
      * @var array
@@ -57,6 +101,8 @@
      * @var string
      */
     private $_error;
+    private $_remoteKey;
+
 
     /**
      *
@@ -301,9 +347,6 @@
 	  public function fs_listDirectory($psDirectory = ''){
 	  	return $this->_apiJSONGet('fs.list', array($psDirectory));
 	  }
-	  public function removeFile(){
-	  	
-	  }
 	  public function fs_createDirectory($psDirectory){
       return $this->_apiJSONGet('fs.mkdir', array($psDirectory));
 	  }
@@ -410,6 +453,62 @@
     }
     public function network_getMacAddress(){
       return $this->_apiJSONGet('system.mac_address_get');
+    }
+
+    //===============================================
+    // API Remote Control (Telecommande)
+    //===============================================
+    private function _apiRemote($piTV, $piCode, $psKey, $pbLong = false){
+      curl_setopt($this->_oCurl, CURLOPT_HEADER, true);
+      $psUrl = 'http://hd'.$piTV.'.freebox.fr/pub/remote_control?code='.$piCode.'&key='.$psKey;
+      if($pbLong == true){
+        $psUrl .= '&long=true';
+      }
+      curl_setopt($this->_oCurl, CURLOPT_URL, $psUrl);
+      curl_setopt($this->_oCurl, CURLOPT_POST, false);
+      curl_setopt($this->_oCurl, CURLOPT_RETURNTRANSFER, true);
+      curl_exec($this->_oCurl);
+      if(curl_getinfo($this->_oCurl, CURLINFO_HTTP_CODE) == 200){
+        return true;
+      } else {
+        return false;
+      }
+    }
+    public function remote_setKey($piKey){
+      if(is_int($piKey) && strlen($piKey) == 8){
+        $this->_remoteKey = $piKey;
+        return true;
+      } else {
+        return false;
+      }
+    }
+    public function remote_getKey(){
+      return $this->_remoteKey;
+    }
+    public function remote_sendCommand($psKey){
+      if(!empty($this->_remoteKey)){
+        return $this->_apiRemote(1, $this->_remoteKey, $psKey);
+      } else {
+        return false;
+      }
+    }
+    public function remote_setChannel($piChannel){
+      if(!empty($this->_remoteKey)){
+        $arrChannel = str_split($piChannel);
+        foreach($arrChannel as $key => $value){
+          if($key == (count($arrChannel) -1)){
+            $res = $this->_apiRemote(1, $this->_remoteKey, $value);
+          } else {
+            $res = $this->_apiRemote(1, $this->_remoteKey, $value, true);
+          }
+          if(!$res){
+            break;
+          }
+        }
+        return $res;
+      } else {
+        return false;
+      }
     }
 
     //===============================================
