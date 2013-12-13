@@ -25,14 +25,14 @@ before_script:
 
 script:
   ## PHP_CodeSniffer
-  - phpcs --standard=PSR1 PHPFreebox/
-  - phpcs --standard=PSR2 PHPFreebox/
+  - phpcs --standard=PSR1 src/
+  - phpcs --standard=PSR2 src/
   ## PHP Copy/Paste Detector
-  - php phpcpd.phar --verbose PHPFreebox/
+  - php phpcpd.phar --verbose src/
   ## PHP Mess Detector
-  - phpmd PHPFreebox/ text codesize,unusedcode,naming,design
+  - phpmd src/ text codesize,unusedcode,naming,design
   ## PHPLOC
-  - php phploc.phar PHPFreebox/
+  - php phploc.phar src/
 
 notifications:
   email:
