@@ -90,7 +90,8 @@ class PhpFreebox
     /**
      * Constructor
      */
-    public function __construct($appId, $appName, $appVersion, $deviceName) {
+    public function __construct($appId, $appName, $appVersion, $deviceName)
+    {
         // Initialization : CURL
         $this->oCurl = curl_init();
 
@@ -103,13 +104,15 @@ class PhpFreebox
     /**
      * Destructor
      */
-    public function __destruct() {
+    public function __destruct()
+    {
         if ($this->oCurl) {
             curl_close($this->oCurl);
         }
     }
 
-    public function login() {
+    public function login()
+    {
         // #1 : Get the app token
         if (is_null($this->loginAppToken) && is_null($this->loginTrackId)) {
             $this->apiLoginAuthorize();
@@ -135,38 +138,45 @@ class PhpFreebox
         return $status;
     }
 
-    public function logout() {
+    public function logout()
+    {
         return $this->apiLoginLogout();
     }
 
-    public function resetAccess() {
+    public function resetAccess()
+    {
         $this->loginAppToken = null;
         $this->loginTrackId = null;
     }
 
-    public function getAppToken() {
+    public function getAppToken()
+    {
         if (is_null($this->loginAppToken)) {
             $this->apiLoginAuthorize();
         }
         return $this->loginAppToken;
     }
-    public function setAppToken($appToken) {
+    public function setAppToken($appToken)
+    {
         $this->loginAppToken = $appToken;
         return $this;
     }
 
-    public function getAppTrackId() {
+    public function getAppTrackId()
+    {
         if (is_null($this->loginTrackId)) {
             $this->apiLoginAuthorize();
         }
         return $this->loginTrackId;
     }
-    public function setAppTrackId($appTrackId) {
+    public function setAppTrackId($appTrackId)
+    {
         $this->loginTrackId = $appTrackId;
         return $this;
     }
 
-    public function isWifiEnabled() {
+    public function isWifiEnabled()
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -176,7 +186,8 @@ class PhpFreebox
         }
         return self::ERROR_API_RETURN;
     }
-    public function getWifiMACFilterState() {
+    public function getWifiMACFilterState()
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -187,7 +198,8 @@ class PhpFreebox
         return self::ERROR_API_RETURN;
     }
 
-    public function getConnection() {
+    public function getConnection()
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -197,7 +209,8 @@ class PhpFreebox
         }
         return self::ERROR_API_RETURN;
     }
-    public function getDownloads() {
+    public function getDownloads()
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -207,14 +220,16 @@ class PhpFreebox
         }
         return self::ERROR_API_RETURN;
     }
-    public function getFsFileUrl($path, $iThumbnailHeight = 480) {
+    public function getFsFileUrl($path, $iThumbnailHeight = 480)
+    {
         $arrayGet = array('inline' => 1);
         if (is_numeric($iThumbnailHeight)) {
             $arrayGet['thumbnail'] = $iThumbnailHeight.'p';
         }
         return $this->url.'/api/v3/dl/'.base64_encode($path).'?'.http_build_query($arrayGet);
     }
-    public function getFsList($path, $bOnlyFolder = false, $bCountSubFolder = false, $bRemoveHidden = false) {
+    public function getFsList($path, $bOnlyFolder = false, $bCountSubFolder = false, $bRemoveHidden = false)
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -224,7 +239,8 @@ class PhpFreebox
         }
         return self::ERROR_API_RETURN;
     }
-    public function getStorageDisk() {
+    public function getStorageDisk()
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -234,7 +250,8 @@ class PhpFreebox
         }
         return self::ERROR_API_RETURN;
     }
-    public function getSystem() {
+    public function getSystem()
+    {
         if (is_null($this->sessionToken)) {
             return self::ERROR_SESSION;
         }
@@ -246,7 +263,8 @@ class PhpFreebox
     }
 
     // Login
-    private function apiLogin() {
+    private function apiLogin()
+    {
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/login/');
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
@@ -261,7 +279,8 @@ class PhpFreebox
 
         return true;
     }
-    private function apiLoginAuthorize($trackId = null) {
+    private function apiLoginAuthorize($trackId = null)
+    {
         if (is_null($trackId)) {
             // Request authorization
             curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/login/authorize/');
@@ -292,7 +311,8 @@ class PhpFreebox
             return $data['result']['status'];
         }
     }
-    private function apiLoginSession() {
+    private function apiLoginSession()
+    {
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/login/session/');
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
@@ -307,7 +327,8 @@ class PhpFreebox
         $this->sessionToken = isset($data['result']['session_token']) ? $data['result']['session_token'] : null;
         return self::ACCESS_GRANTED;
     }
-    private function apiLoginLogout() {
+    private function apiLoginLogout()
+    {
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/login/logout/');
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
@@ -325,7 +346,8 @@ class PhpFreebox
         return true;
     }
     // Connection
-    private function apiConnection() {
+    private function apiConnection()
+    {
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/connection/');
@@ -339,7 +361,8 @@ class PhpFreebox
         return $data['result'];
     }
     // Downloads
-    private function apiDownloads() {
+    private function apiDownloads()
+    {
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/downloads/');
@@ -353,7 +376,8 @@ class PhpFreebox
         return (isset($data['result']) ? $data['result'] : array());
     }
     // File Systems
-    private function apiFsLs($path, $options = array()) {
+    private function apiFsLs($path, $options = array())
+    {
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/fs/ls/'.base64_encode($path).'?'.http_build_query($options));
@@ -367,7 +391,8 @@ class PhpFreebox
         return $data['result'];
     }
     // Storage
-    private function apiStorageDisk() {
+    private function apiStorageDisk()
+    {
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/storage/disk/');
@@ -381,7 +406,8 @@ class PhpFreebox
         return $data['result'];
     }
     // System
-    private function apiSystem() {
+    private function apiSystem()
+    {
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v3/system/');
@@ -395,7 +421,8 @@ class PhpFreebox
         return $data['result'];
     }
     // WIFI
-    private function apiWifiConfig($arrayConfig = array()) {
+    private function apiWifiConfig($arrayConfig = array())
+    {
         curl_setopt($this->oCurl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->oCurl, CURLOPT_HEADER, false);
         curl_setopt($this->oCurl, CURLOPT_URL, $this->url.'/api/v2/wifi/config/');
