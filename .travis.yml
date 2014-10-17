@@ -28,7 +28,7 @@ script:
   ## PHP Copy/Paste Detector
   - ./vendor/bin/phpcpd src/
   ## PHP Mess Detector
-  - ./vendor/bin/phpmd src/,text ./phpmd.xml.dist
+  - ./vendor/bin/phpmd src/ text ./phpmd.xml.dist
   ## PHPUnit
   ## - ./vendor/bin/phpunit -c ./ --coverage-text --coverage-html ./build/coverage
   ## PHPLOC
